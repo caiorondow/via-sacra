@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Carnaval Luan</title>
+<title>Carnaval</title>
 
 <style>
 body {
@@ -16,12 +16,10 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    overflow: hidden;
 }
 
 h1 {
     margin-bottom: 50px;
-    font-size: 2rem;
 }
 
 .progress-container {
@@ -50,7 +48,6 @@ h1 {
 }
 
 .checkpoints {
-    position: relative;
     width: 80%;
     margin-top: 25px;
     display: flex;
@@ -58,9 +55,8 @@ h1 {
 }
 
 .city {
-    text-align: center;
     font-size: 14px;
-    opacity: 0.7;
+    opacity: 0.6;
 }
 
 .city.active {
@@ -68,12 +64,27 @@ h1 {
     font-weight: bold;
     color: #00ff88;
 }
+
+.controls {
+    margin-top: 50px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 5px;
+    background: #00ff88;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
-<h1>Barra de Progresso do Peregrino 🚗</h1>
+<h1>Peregrinação 🚗</h1>
 
 <div class="progress-container">
     <div class="progress-bar" id="progress"></div>
@@ -82,16 +93,29 @@ h1 {
 
 <div class="checkpoints" id="checkpoints"></div>
 
-<script>
-const cities = [
-    "C",
-    "NF",
-    "N",
-    "Rio",
-    "BH",
-    "Luan"
-];
+<div class="controls">
+    <button onclick="previous()">⬅ Voltar</button>
+    <button onclick="next()">Avançar ➡</button>
+</div>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAKRv1uSbPQ21WwaKlbfskg0IybIFqxfZc",
+  authDomain: "via-sacra-666d8.firebaseapp.com",
+  projectId: "via-sacra-666d8",
+  storageBucket: "via-sacra-666d8.firebasestorage.app",
+  messagingSenderId: "401028486463",
+  appId: "1:401028486463:web:dd300c0c25b26d4a78af8a",
+  measurementId: "G-CMETYH403E"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const cities = ["C","NF","N","Rio","BH","Luan"];
 let current = 0;
 
 const progress = document.getElementById("progress");
@@ -102,13 +126,11 @@ cities.forEach((city, index) => {
     const div = document.createElement("div");
     div.classList.add("city");
     div.innerText = city;
-    div.id = "city-" + index;
     checkpointsContainer.appendChild(div);
 });
 
 function updateProgress() {
     const percentage = (current / (cities.length - 1)) * 100;
-
     progress.style.width = percentage + "%";
     car.style.left = percentage + "%";
 
@@ -117,20 +139,26 @@ function updateProgress() {
     });
 }
 
-async function loadProgress() {
-    try {
-        const response = await fetch("progress.json?t=" + new Date().getTime());
-        const data = await response.json();
-        current = data.current;
+const docRef = doc(db, "progress", "journey");
+
+onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+        current = docSnap.data().current;
         updateProgress();
-    } catch (error) {
-        console.error("Erro ao carregar progresso:", error);
+    }
+});
+
+async function next() {
+    if (current < cities.length - 1) {
+        await updateDoc(docRef, { current: current + 1 });
     }
 }
 
-loadProgress();
-
-setInterval(loadProgress, 30000);
+async function previous() {
+    if (current > 0) {
+        await updateDoc(docRef, { current: current - 1 });
+    }
+}
 </script>
 
 </body>
