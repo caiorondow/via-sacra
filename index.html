@@ -159,6 +159,10 @@ async function previous() {
         await updateDoc(docRef, { current: current - 1 });
     }
 }
+
+window.next = next;
+window.previous = previous;
+
 </script>
 
 </body>
