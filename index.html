@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minha Jornada</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+h1 {
+    margin-bottom: 40px;
+}
+
+.progress-container {
+    position: relative;
+    width: 80%;
+    height: 8px;
+    background: #333;
+    border-radius: 10px;
+}
+
+.progress-bar {
+    position: absolute;
+    height: 100%;
+    width: 0%;
+    background: #00ff88;
+    border-radius: 10px;
+    transition: width 0.4s ease;
+}
+
+.car {
+    position: absolute;
+    top: -20px;
+    font-size: 30px;
+    transform: translateX(-50%);
+    transition: left 0.4s ease;
+}
+
+.checkpoints {
+    position: relative;
+    width: 80%;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.city {
+    text-align: center;
+    font-size: 14px;
+}
+
+.controls {
+    margin-top: 50px;
+}
+
+button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 5px;
+    background: #00ff88;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #00cc6a;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Minha Jornada 🚗</h1>
+
+<div class="progress-container">
+    <div class="progress-bar" id="progress"></div>
+    <div class="car" id="car">🚗</div>
+</div>
+
+<div class="checkpoints" id="checkpoints"></div>
+
+<div class="controls">
+    <button onclick="previous()">⬅ Voltar</button>
+    <button onclick="next()">Avançar ➡</button>
+</div>
+
+<script>
+const cities = [
+    "São Paulo",
+    "Campinas",
+    "Ribeirão Preto",
+    "Uberlândia",
+    "Goiânia",
+    "Brasília"
+];
+
+let current = 0;
+
+const progress = document.getElementById("progress");
+const car = document.getElementById("car");
+const checkpointsContainer = document.getElementById("checkpoints");
+
+// Criar checkpoints na tela
+cities.forEach(city => {
+    const div = document.createElement("div");
+    div.classList.add("city");
+    div.innerText = city;
+    checkpointsContainer.appendChild(div);
+});
+
+function updateProgress() {
+    const percentage = (current / (cities.length - 1)) * 100;
+    progress.style.width = percentage + "%";
+    car.style.left = percentage + "%";
+}
+
+function next() {
+    if (current < cities.length - 1) {
+        current++;
+        updateProgress();
+    }
+}
+
+function previous() {
+    if (current > 0) {
+        current--;
+        updateProgress();
+    }
+}
+
+// Inicializa posição
+updateProgress();
+</script>
+
+</body>
+</html>
