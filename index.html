@@ -3,31 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Caravana de Cordeiro - RJ à Belo Horizonte - MG</title>
+<title>CARAVANA DE CORDEIRO ATÉ BELO HORIZONTE</title>
 
 <style>
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background: #111;
+    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
     color: white;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    overflow: hidden;
 }
 
 h1 {
-    margin-bottom: 40px;
+    margin-bottom: 50px;
+    font-size: 2rem;
 }
 
 .progress-container {
     position: relative;
     width: 80%;
-    height: 8px;
-    background: #333;
-    border-radius: 10px;
+    height: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
 }
 
 .progress-bar {
@@ -35,22 +37,22 @@ h1 {
     height: 100%;
     width: 0%;
     background: #00ff88;
-    border-radius: 10px;
-    transition: width 0.4s ease;
+    border-radius: 20px;
+    transition: width 0.5s ease;
 }
 
 .car {
     position: absolute;
-    top: -20px;
-    font-size: 30px;
+    top: -25px;
+    font-size: 35px;
     transform: translateX(-50%);
-    transition: left 0.4s ease;
+    transition: left 0.5s ease;
 }
 
 .checkpoints {
     position: relative;
     width: 80%;
-    margin-top: 20px;
+    margin-top: 25px;
     display: flex;
     justify-content: space-between;
 }
@@ -58,25 +60,13 @@ h1 {
 .city {
     text-align: center;
     font-size: 14px;
+    opacity: 0.7;
 }
 
-.controls {
-    margin-top: 50px;
-}
-
-button {
-    padding: 10px 20px;
-    margin: 0 10px;
-    border: none;
-    border-radius: 5px;
-    background: #00ff88;
-    color: black;
+.city.active {
+    opacity: 1;
     font-weight: bold;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #00cc6a;
+    color: #00ff88;
 }
 </style>
 </head>
@@ -91,11 +81,6 @@ button:hover {
 </div>
 
 <div class="checkpoints" id="checkpoints"></div>
-
-<div class="controls">
-    <button onclick="previous()">⬅ Voltar</button>
-    <button onclick="next()">Avançar ➡</button>
-</div>
 
 <script>
 const cities = [
@@ -113,36 +98,39 @@ const progress = document.getElementById("progress");
 const car = document.getElementById("car");
 const checkpointsContainer = document.getElementById("checkpoints");
 
-// Criar checkpoints na tela
-cities.forEach(city => {
+cities.forEach((city, index) => {
     const div = document.createElement("div");
     div.classList.add("city");
     div.innerText = city;
+    div.id = "city-" + index;
     checkpointsContainer.appendChild(div);
 });
 
 function updateProgress() {
     const percentage = (current / (cities.length - 1)) * 100;
+
     progress.style.width = percentage + "%";
     car.style.left = percentage + "%";
+
+    document.querySelectorAll(".city").forEach((el, index) => {
+        el.classList.toggle("active", index === current);
+    });
 }
 
-function next() {
-    if (current < cities.length - 1) {
-        current++;
+async function loadProgress() {
+    try {
+        const response = await fetch("progress.json?t=" + new Date().getTime());
+        const data = await response.json();
+        current = data.current;
         updateProgress();
+    } catch (error) {
+        console.error("Erro ao carregar progresso:", error);
     }
 }
 
-function previous() {
-    if (current > 0) {
-        current--;
-        updateProgress();
-    }
-}
+loadProgress();
 
-// Inicializa posição
-updateProgress();
+setInterval(loadProgress, 30000);
 </script>
 
 </body>
