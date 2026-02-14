@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pulando Carnaval</title>
+<title>Mural do Carnaval</title>
 
 <style>
 body {
@@ -18,146 +18,133 @@ body {
 }
 
 h1 {
+    margin-bottom: 30px;
+}
+
+/* UPLOAD BONITO */
+
+.upload-box {
+    width: 280px;
+    padding: 25px;
+    border: 2px dashed #00ff88;
+    border-radius: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
     margin-bottom: 40px;
 }
 
-.progress-container {
-    position: relative;
-    width: 80%;
-    height: 10px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 20px;
+.upload-box:hover {
+    background: rgba(0,255,136,0.1);
 }
 
-.progress-bar {
-    position: absolute;
-    height: 100%;
-    width: 0%;
-    background: #00ff88;
-    border-radius: 20px;
-    transition: width 0.5s ease;
+.upload-box input {
+    display: none;
 }
 
-.car {
-    position: absolute;
-    top: -25px;
-    font-size: 35px;
-    transform: translateX(-50%);
-    transition: left 0.5s ease;
-}
-
-.checkpoints {
-    width: 80%;
-    margin-top: 25px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.city {
-    font-size: 14px;
-    opacity: 0.6;
-}
-
-.city.active {
-    opacity: 1;
+.upload-box p {
+    margin: 0;
     font-weight: bold;
-    color: #00ff88;
 }
 
-/* MURAL */
-
-hr {
-    width: 80%;
-    margin: 60px 0;
-    opacity: 0.2;
-}
-
-.mural-form {
-    margin-bottom: 30px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.mural-form input {
-    padding: 8px;
-    border-radius: 5px;
-    border: none;
-}
-
-button {
-    padding: 8px 15px;
-    border-radius: 5px;
-    border: none;
-    background: #00ff88;
-    font-weight: bold;
-    cursor: pointer;
-}
+/* GRID */
 
 .mural-grid {
-    width: 80%;
+    width: 90%;
+    max-width: 1100px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 15px;
 }
 
-.photo-card {
-    background: rgba(255,255,255,0.1);
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
-}
-
-.photo-card img {
+.mural-grid img {
     width: 100%;
-    border-radius: 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-.photo-card h4 {
-    margin: 8px 0 4px;
+.mural-grid img:hover {
+    transform: scale(1.03);
 }
 
-.photo-card p {
-    font-size: 14px;
-    opacity: 0.8;
+/* MODAL FULLSCREEN */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.modal img {
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 12px;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.close-btn {
+    position: absolute;
+    top: 25px;
+    right: 35px;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.nav {
+    position: absolute;
+    top: 50%;
+    font-size: 40px;
+    cursor: pointer;
+    user-select: none;
+    transform: translateY(-50%);
+}
+
+.prev {
+    left: 30px;
+}
+
+.next {
+    right: 30px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🎭 Pulando Carnaval...</h1>
+<h1>🎭 Mural do Folião</h1>
 
-<div class="progress-container">
-    <div class="progress-bar" id="progress"></div>
-    <div class="car" id="car">🍻</div>
-</div>
-
-<div class="checkpoints" id="checkpoints"></div>
-
-<hr>
-
-<h2>Mural do Folião</h2>
-
-<div class="mural-form">
+<label class="upload-box">
     <input type="file" id="photoFile" accept="image/*">
-    <button onclick="addPhoto()">Enviar 📸</button>
-</div>
+    <p>📸 Clique para enviar foto</p>
+</label>
 
 <div class="mural-grid" id="mural"></div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+    <span class="close-btn" onclick="closeModal()">✖</span>
+    <span class="nav prev" onclick="changeImage(-1)">❮</span>
+    <img id="modalImg">
+    <span class="nav next" onclick="changeImage(1)">❯</span>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
   getFirestore, 
-  doc, 
-  onSnapshot, 
-  updateDoc,
   collection,
   addDoc,
   query,
-  orderBy
+  orderBy,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -172,108 +159,91 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* PROGRESSO */
-
-const cities = ["C", ".", ".", ".", ".", "NF", ".", ".", ".", ".","N", ".", ".", ".", ".", "Rio", ".", ".", ".", ".","BH", ".", ".", ".", ".", "Luan"];
-let current = 0;
-
-const progress = document.getElementById("progress");
-const car = document.getElementById("car");
-const checkpointsContainer = document.getElementById("checkpoints");
-
-cities.forEach((city) => {
-    const div = document.createElement("div");
-    div.classList.add("city");
-    div.innerText = city;
-    checkpointsContainer.appendChild(div);
-});
-
-function updateProgress() {
-    const percentage = (current / (cities.length - 1)) * 100;
-    progress.style.width = percentage + "%";
-    car.style.left = percentage + "%";
-
-    document.querySelectorAll(".city").forEach((el, index) => {
-        el.classList.toggle("active", index === current);
-    });
-}
-
-const docRef = doc(db, "progress", "journey");
-
-onSnapshot(docRef, (docSnap) => {
-    if (docSnap.exists()) {
-        current = docSnap.data().current;
-        updateProgress();
-    }
-});
-
-/* MURAL */
-
 const muralRef = collection(db, "mural");
 const muralContainer = document.getElementById("mural");
+
+let images = [];
+let currentIndex = 0;
+
+/* LISTENER REALTIME */
 
 const muralQuery = query(muralRef, orderBy("createdAt", "desc"));
 
 onSnapshot(muralQuery, (snapshot) => {
+    images = [];
     muralContainer.innerHTML = "";
+
     snapshot.forEach((doc) => {
         const data = doc.data();
-        const card = document.createElement("div");
-        card.classList.add("photo-card");
+        images.push(data.photoUrl);
 
-        card.innerHTML = `
-            <img src="${data.photoUrl}" />
-        `;
-
-
-        muralContainer.appendChild(card);
+        const img = document.createElement("img");
+        img.src = data.photoUrl;
+        img.onclick = () => openModal(images.indexOf(data.photoUrl));
+        muralContainer.appendChild(img);
     });
 });
 
-/* UPLOAD CLOUDINARY */
+/* UPLOAD */
 
-window.addPhoto = async function () {
-    const file = document.getElementById("photoFile").files[0];
+document.getElementById("photoFile").addEventListener("change", addPhoto);
 
-    if (!file) {
-        alert("Escolha uma imagem!");
-        return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-        alert("Imagem muito grande! Máx 5MB.");
-        return;
-    }
+async function addPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", "mural-caranval");
 
-    try {
-        const response = await fetch(
-            "https://api.cloudinary.com/v1_1/deh1oslzj/image/upload",
-            {
-                method: "POST",
-                body: formData
-            }
-        );
+    const response = await fetch(
+        "https://api.cloudinary.com/v1_1/deh1oslzj/image/upload",
+        { method: "POST", body: formData }
+    );
 
-        const data = await response.json();
-        const imageUrl = data.secure_url;
+    const data = await response.json();
 
-        await addDoc(muralRef, {
-            photoUrl: imageUrl,
-            createdAt: new Date()
-        });
+    await addDoc(muralRef, {
+        photoUrl: data.secure_url,
+        createdAt: new Date()
+    });
 
-        document.getElementById("photoFile").value = "";
+    event.target.value = "";
+}
 
-    } catch (error) {
-        console.error(error);
-        alert("Erro ao enviar imagem!");
-    }
+/* MODAL */
+
+const modal = document.getElementById("modal");
+const modalImg = document.getElementById("modalImg");
+
+window.openModal = function(index) {
+    currentIndex = index;
+    modalImg.src = images[currentIndex];
+    modal.classList.add("active");
 };
 
+window.closeModal = function() {
+    modal.classList.remove("active");
+};
+
+window.changeImage = function(direction) {
+    currentIndex += direction;
+
+    if (currentIndex < 0) currentIndex = images.length - 1;
+    if (currentIndex >= images.length) currentIndex = 0;
+
+    modalImg.src = images[currentIndex];
+};
+
+/* TECLADO */
+
+document.addEventListener("keydown", (e) => {
+    if (!modal.classList.contains("active")) return;
+
+    if (e.key === "ArrowRight") changeImage(1);
+    if (e.key === "ArrowLeft") changeImage(-1);
+    if (e.key === "Escape") closeModal();
+});
 </script>
 
 </body>
