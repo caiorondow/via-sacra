@@ -79,6 +79,49 @@ button {
     font-weight: bold;
     cursor: pointer;
 }
+
+.mural-form {
+    margin-bottom: 30px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.mural-form input {
+    padding: 8px;
+    border-radius: 5px;
+    border: none;
+}
+
+.mural-grid {
+    width: 80%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.photo-card {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.photo-card img {
+    width: 100%;
+    border-radius: 8px;
+}
+
+.photo-card h4 {
+    margin: 8px 0 4px;
+}
+
+.photo-card p {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
 </style>
 </head>
 
@@ -98,9 +141,30 @@ button {
     <button onclick="next()">Avançar ➡</button>
 </div> -->
 
+<hr style="width:80%; margin:50px 0; opacity:0.2;">
+
+<h2>Mural do Folião</h2>
+
+<div class="mural-form">
+    <input type="text" id="name" placeholder="Seu nome">
+    <input type="text" id="photoUrl" placeholder="URL da foto">
+    <input type="text" id="message" placeholder="Mensagem (opcional)">
+    <button onclick="addPhoto()">Enviar 🎉</button>
+</div>
+
+<div class="mural-grid" id="mural"></div>
+    
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { 
+  getFirestore, 
+  doc, 
+  onSnapshot, 
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAKRv1uSbPQ21WwaKlbfskg0IybIFqxfZc",
@@ -162,6 +226,53 @@ async function previous() {
 
 //window.next = next;
 //window.previous = previous;
+
+const muralRef = collection(db, "mural");
+const muralContainer = document.getElementById("mural");
+
+window.addPhoto = async function () {
+    const name = document.getElementById("name").value;
+    const file = document.getElementById("photoFile").files[0];
+    const message = document.getElementById("message").value;
+
+    if (!name || !file) {
+        alert("Preencha nome e escolha uma imagem!");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "mural-carnaval");
+
+    try {
+        const response = await fetch(
+            "https://api.cloudinary.com/v1_1/deh1oslzj/image/upload",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+        const imageUrl = data.secure_url;
+
+        await addDoc(collection(db, "mural"), {
+            name,
+            photoUrl: imageUrl,
+            message,
+            createdAt: new Date()
+        });
+
+        document.getElementById("name").value = "";
+        document.getElementById("photoFile").value = "";
+        document.getElementById("message").value = "";
+
+    } catch (error) {
+        console.error(error);
+        alert("Erro ao enviar imagem!");
+    }
+};
+
 
 </script>
 
