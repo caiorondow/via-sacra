@@ -141,10 +141,8 @@ button {
 <h2>Mural do Folião</h2>
 
 <div class="mural-form">
-    <input type="text" id="name" placeholder="Seu nome">
     <input type="file" id="photoFile" accept="image/*">
-    <input type="text" id="message" placeholder="Mensagem (opcional)">
-    <button onclick="addPhoto()">Enviar 🎉</button>
+    <button onclick="addPhoto()">Enviar 📸</button>
 </div>
 
 <div class="mural-grid" id="mural"></div>
@@ -225,9 +223,8 @@ onSnapshot(muralQuery, (snapshot) => {
 
         card.innerHTML = `
             <img src="${data.photoUrl}" />
-            <h4>${data.name}</h4>
-            <p>${data.message || ""}</p>
         `;
+
 
         muralContainer.appendChild(card);
     });
@@ -236,12 +233,10 @@ onSnapshot(muralQuery, (snapshot) => {
 /* UPLOAD CLOUDINARY */
 
 window.addPhoto = async function () {
-    const name = document.getElementById("name").value;
     const file = document.getElementById("photoFile").files[0];
-    const message = document.getElementById("message").value;
 
-    if (!name || !file) {
-        alert("Preencha nome e escolha uma imagem!");
+    if (!file) {
+        alert("Escolha uma imagem!");
         return;
     }
 
@@ -267,21 +262,18 @@ window.addPhoto = async function () {
         const imageUrl = data.secure_url;
 
         await addDoc(muralRef, {
-            name,
             photoUrl: imageUrl,
-            message,
             createdAt: new Date()
         });
 
-        document.getElementById("name").value = "";
         document.getElementById("photoFile").value = "";
-        document.getElementById("message").value = "";
 
     } catch (error) {
         console.error(error);
         alert("Erro ao enviar imagem!");
     }
 };
+
 </script>
 
 </body>
