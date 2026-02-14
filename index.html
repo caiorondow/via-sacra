@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Carnaval</title>
+<title>Pulando Carnaval</title>
 
 <style>
 body {
@@ -13,13 +13,12 @@ body {
     color: white;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-    height: 100vh;
+    padding: 40px 0;
 }
 
 h1 {
-    margin-bottom: 50px;
+    margin-bottom: 40px;
 }
 
 .progress-container {
@@ -65,19 +64,12 @@ h1 {
     color: #00ff88;
 }
 
-.controls {
-    margin-top: 50px;
-}
+/* MURAL */
 
-button {
-    padding: 10px 20px;
-    margin: 0 10px;
-    border: none;
-    border-radius: 5px;
-    background: #00ff88;
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
+hr {
+    width: 80%;
+    margin: 60px 0;
+    opacity: 0.2;
 }
 
 .mural-form {
@@ -92,6 +84,15 @@ button {
     padding: 8px;
     border-radius: 5px;
     border: none;
+}
+
+button {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    background: #00ff88;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 .mural-grid {
@@ -121,7 +122,6 @@ button {
     font-size: 14px;
     opacity: 0.8;
 }
-
 </style>
 </head>
 
@@ -136,25 +136,21 @@ button {
 
 <div class="checkpoints" id="checkpoints"></div>
 
-<!-- <div class="controls">
-    <button onclick="previous()">⬅ Voltar</button>
-    <button onclick="next()">Avançar ➡</button>
-</div> -->
+<hr>
 
-<hr style="width:80%; margin:50px 0; opacity:0.2;">
-
-<h2>Mural do Folião</h2>
+<h2>📸 Mural do Folião</h2>
 
 <div class="mural-form">
     <input type="text" id="name" placeholder="Seu nome">
-    <input type="text" id="photoUrl" placeholder="URL da foto">
+    <input type="file" id="photoFile" accept="image/*">
     <input type="text" id="message" placeholder="Mensagem (opcional)">
     <button onclick="addPhoto()">Enviar 🎉</button>
 </div>
 
 <div class="mural-grid" id="mural"></div>
-    
+
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
   getFirestore, 
   doc, 
@@ -167,17 +163,18 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAKRv1uSbPQ21WwaKlbfskg0IybIFqxfZc",
+  apiKey: "SUA_API_KEY_AQUI",
   authDomain: "via-sacra-666d8.firebaseapp.com",
   projectId: "via-sacra-666d8",
   storageBucket: "via-sacra-666d8.firebasestorage.app",
   messagingSenderId: "401028486463",
-  appId: "1:401028486463:web:dd300c0c25b26d4a78af8a",
-  measurementId: "G-CMETYH403E"
+  appId: "1:401028486463:web:dd300c0c25b26d4a78af8a"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+/* PROGRESSO */
 
 const cities = ["C", ".", ".", ".", ".", "NF", ".", ".", ".", ".","N", ".", ".", ".", ".", "Rio", ".", ".", ".", ".","BH", ".", ".", ".", ".", "Luan"];
 let current = 0;
@@ -186,7 +183,7 @@ const progress = document.getElementById("progress");
 const car = document.getElementById("car");
 const checkpointsContainer = document.getElementById("checkpoints");
 
-cities.forEach((city, index) => {
+cities.forEach((city) => {
     const div = document.createElement("div");
     div.classList.add("city");
     div.innerText = city;
@@ -212,23 +209,31 @@ onSnapshot(docRef, (docSnap) => {
     }
 });
 
-async function next() {
-    if (current < cities.length - 1) {
-        await updateDoc(docRef, { current: current + 1 });
-    }
-}
-
-async function previous() {
-    if (current > 0) {
-        await updateDoc(docRef, { current: current - 1 });
-    }
-}
-
-//window.next = next;
-//window.previous = previous;
+/* MURAL */
 
 const muralRef = collection(db, "mural");
 const muralContainer = document.getElementById("mural");
+
+const muralQuery = query(muralRef, orderBy("createdAt", "desc"));
+
+onSnapshot(muralQuery, (snapshot) => {
+    muralContainer.innerHTML = "";
+    snapshot.forEach((doc) => {
+        const data = doc.data();
+        const card = document.createElement("div");
+        card.classList.add("photo-card");
+
+        card.innerHTML = `
+            <img src="${data.photoUrl}" />
+            <h4>${data.name}</h4>
+            <p>${data.message || ""}</p>
+        `;
+
+        muralContainer.appendChild(card);
+    });
+});
+
+/* UPLOAD CLOUDINARY */
 
 window.addPhoto = async function () {
     const name = document.getElementById("name").value;
@@ -240,9 +245,14 @@ window.addPhoto = async function () {
         return;
     }
 
+    if (file.size > 5 * 1024 * 1024) {
+        alert("Imagem muito grande! Máx 5MB.");
+        return;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "mural-carnaval");
+    formData.append("upload_preset", "mural-caranval");
 
     try {
         const response = await fetch(
@@ -256,7 +266,7 @@ window.addPhoto = async function () {
         const data = await response.json();
         const imageUrl = data.secure_url;
 
-        await addDoc(collection(db, "mural"), {
+        await addDoc(muralRef, {
             name,
             photoUrl: imageUrl,
             message,
@@ -272,8 +282,6 @@ window.addPhoto = async function () {
         alert("Erro ao enviar imagem!");
     }
 };
-
-
 </script>
 
 </body>
